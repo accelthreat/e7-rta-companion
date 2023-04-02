@@ -35,21 +35,16 @@ export default function MatchHistory({ sample_games }: MatchHistoryProps) {
               <div className="p-5" key={rta_match.uid}>
                 <h6>Player 1: {rta_match.players[0]}</h6>
                 <h6>Player 2: {rta_match.players[1]}</h6>
-                <h6>
-                  First Pick:{" "}
-                  {rta_match.first_pick
-                    ? rta_match.players[0]
-                    : rta_match.players[1]}
-                </h6>
+                <h6>First Pick: {rta_match.players[0]}</h6>
                 <h5 className="mt-2">Draft:</h5>
                 <div className="flex">
                   <ul className="px-2">
-                    {rta_match.picks.slice(0, 5).map((pick) => (
+                    {rta_match.first_pick_characters.map((pick) => (
                       <li key={pick}>{pick}</li>
                     ))}
                   </ul>
                   <ul className="px-2">
-                    {rta_match.picks.slice(5, 10).map((pick) => (
+                    {rta_match.second_pick_characters.map((pick) => (
                       <li key={pick}>{pick}</li>
                     ))}
                   </ul>

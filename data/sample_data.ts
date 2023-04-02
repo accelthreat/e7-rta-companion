@@ -1,24 +1,25 @@
 export interface RtaMatch {
   players: string[];
-  first_pick: boolean;
   prebans: string[];
-  picks: string[];
+  first_pick_characters: string[];
+  second_pick_characters: string[];
   postbans: number[];
-  winner: string;
+  winner: number;
   uid: string;
 }
 
 export const sample_games: RtaMatch[] = [
   {
     players: ["Accelthreat", "LeweK"],
-    first_pick: true,
     prebans: ["Conqueror Lilias", "Lua", "Angel of Light Angelica"],
-    picks: [
+    first_pick_characters: [
       "Mediator Kawerik",
       "Adventurer Ras",
       "Landy",
       "Zahhak",
       "Specter Tenebria",
+    ],
+    second_pick_characters: [
       "Unbound Knight Arowell",
       "Savior Adin",
       "Milim",
@@ -26,19 +27,20 @@ export const sample_games: RtaMatch[] = [
       "Charlotte",
     ],
     postbans: [1, 9],
-    winner: "Accelthreat",
+    winner: 0,
     uid: "0",
   },
   {
     players: ["Accelthreat", "LeweK"],
-    first_pick: true,
     prebans: ["Angel of Light Angelica", "Conqueror Lilias", "Lua"],
-    picks: [
+    first_pick_characters: [
       "Mediator Kawerik",
       "Landy",
       "Adventurer Ras",
       "Specter Tenebria",
       "Zahhak",
+    ],
+    second_pick_characters: [
       "Savior Adin",
       "Unbound Knight Arowell",
       "Destina",
@@ -46,19 +48,41 @@ export const sample_games: RtaMatch[] = [
       "Charlotte",
     ],
     postbans: [2, 9],
-    winner: "Accelthreat",
+    winner: 0,
     uid: "1",
   },
   {
+    players: ["Accelthreat", "LeweK"],
+    prebans: ["Conqueror Lilias", "Lua", "Angel of Light Angelica", "Belian"],
+    first_pick_characters: [
+      "Mediator Kawerik",
+      "Adventurer Ras",
+      "Landy",
+      "Zahhak",
+      "Specter Tenebria",
+    ],
+    second_pick_characters: [
+      "Fallen Cecilia",
+      "Savior Adin",
+      "Milim",
+      "Destina",
+      "Charlotte",
+    ],
+    postbans: [1, 9],
+    winner: 0,
+    uid: "3",
+  },
+  {
     players: ["asdfasdfasdfdf", "asdfasdf"],
-    first_pick: true,
     prebans: ["Angel of Light Angelica", "Conqueror Lilias", "Lua"],
-    picks: [
+    first_pick_characters: [
       "Mediator Kawerik",
       "Landy",
       "Adventurer Ras",
       "Specter Tenebria",
       "Zahhak",
+    ],
+    second_pick_characters: [
       "Remnant Violet",
       "Fallen Cecilia",
       "Ray",
@@ -66,28 +90,29 @@ export const sample_games: RtaMatch[] = [
       "Researcher Carrot",
     ],
     postbans: [2, 9],
-    winner: "Accelthreat",
+    winner: 0,
     uid: "2",
   },
   {
-    players: ["Accelthreat", "LeweK"],
-    first_pick: true,
-    prebans: ["Conqueror Lilias", "Lua", "Angel of Light Angelica", "Belian"],
-    picks: [
+    players: ["asdfasdfasdfdf", "asdfasdf"],
+    prebans: ["Angel of Light Angelica", "Conqueror Lilias", "Lua"],
+    first_pick_characters: [
       "Mediator Kawerik",
-      "Adventurer Ras",
       "Landy",
-      "Zahhak",
+      "Crimson Armin",
       "Specter Tenebria",
-      "Fallen Cecilia",
-      "Savior Adin",
-      "Milim",
-      "Destina",
-      "Charlotte",
+      "Zahhak",
     ],
-    postbans: [1, 9],
-    winner: "Accelthreat",
-    uid: "3",
+    second_pick_characters: [
+      "Remnant Violet",
+      "Fallen Cecilia",
+      "Ray",
+      "Milim",
+      "Researcher Carrot",
+    ],
+    postbans: [2, 9],
+    winner: 1,
+    uid: "2",
   },
 ];
 

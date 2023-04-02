@@ -11,6 +11,21 @@ type HomeProps = {
   matches: RtaMatch[];
 };
 
+type Match = {
+  first_pick?: boolean | undefined;
+  prebans?: (string | undefined)[] | undefined;
+  pick_zero?: string | undefined;
+  pick_one?: string | undefined;
+  pick_two?: string | undefined;
+  pick_three?: string | undefined;
+  pick_four?: string | undefined;
+  pick_five?: string | undefined;
+  pick_six?: string | undefined;
+  pick_seven?: string | undefined;
+  pick_eight?: string | undefined;
+  pick_nine?: string | undefined;
+};
+
 export async function getServerSideProps() {
   return {
     props: {
@@ -18,6 +33,119 @@ export async function getServerSideProps() {
     },
   };
 }
+
+function matchPicks(pick: string, picks: string[]): boolean {
+  return [...picks, ""].includes(pick);
+}
+
+function arrayEquals(a: any[], b: any[]) {
+  return (
+    Array.isArray(a) &&
+    Array.isArray(b) &&
+    a.length === b.length &&
+    a.every((val, index) => val === b[index])
+  );
+}
+
+function findCompletedPicks(match: Match): number[] {
+  const first_picks = [
+    match.pick_zero!,
+    match.pick_one!,
+    match.pick_two!,
+    match.pick_three!,
+    match.pick_four!,
+  ];
+  const second_picks = [
+    match.pick_five!,
+    match.pick_six!,
+    match.pick_seven!,
+    match.pick_eight!,
+    match.pick_nine!,
+  ];
+  let index = first_picks.indexOf("");
+  let secondIndex = second_picks.indexOf("");
+  console.log("Index, secondIndex", index, secondIndex);
+
+  if (!match.first_pick) {
+    [index, secondIndex] = [secondIndex, index];
+  }
+
+  if (index === 0) return [0];
+  else if (index === 1 && secondIndex < 2) {
+    return [5, 6];
+  } else if (secondIndex === 2 && index < 3) {
+    return [1, 2];
+  } else if (index === 3 && secondIndex < 4) {
+    return [7, 8];
+  } else if (secondIndex === 4 && index !== -1) {
+    return [3, 4];
+  } else if (index === -1 && secondIndex === 4) {
+    return [9];
+  } else return [-1];
+}
+
+type Pick = {
+  picks: string[];
+  wins: number;
+  loses: number;
+};
+
+type PickArray = {
+  picks: Pick[];
+  searchIndex: number[];
+};
+
+const pickArrayReducer = (result: PickArray, match: RtaMatch): PickArray => {
+  const searchIndex = result.searchIndex;
+  let picks: string[] = [];
+  const first_pick = searchIndex[0] < 5;
+
+  if (first_pick) {
+    picks = match.first_pick_characters.slice(
+      searchIndex[0],
+      searchIndex[1] + 1
+    );
+  } else {
+    picks = match.second_pick_characters.slice(
+      searchIndex[0] - 5,
+      searchIndex[1] - 5 + 1
+    );
+  }
+
+  const index = result.picks.findIndex((val) => {
+    return arrayEquals(val.picks.sort(), picks.sort());
+  });
+
+  if (index !== -1) {
+    result.picks[index].wins =
+      (first_pick && match.winner === 0) || (!first_pick && match.winner === 1)
+        ? result.picks[index].wins + 1
+        : result.picks[index].wins;
+    result.picks[index].loses =
+      (first_pick && match.winner === 1) || (!first_pick && match.winner === 0)
+        ? result.picks[index].loses + 1
+        : result.picks[index].loses;
+  } else {
+    result.picks.push({
+      picks: picks,
+      wins:
+        (first_pick && match.winner === 0) ||
+        (!first_pick && match.winner === 1)
+          ? 1
+          : 0,
+      loses:
+        (first_pick && match.winner === 1) ||
+        (!first_pick && match.winner === 0)
+          ? 1
+          : 0,
+    });
+  }
+
+  return {
+    picks: result.picks,
+    searchIndex: result.searchIndex,
+  };
+};
 
 export default function Home({ matches }: HomeProps) {
   const { control, register, watch } = useForm<FormValues>({
@@ -50,7 +178,7 @@ export default function Home({ matches }: HomeProps) {
   const watchPickNine = watch("pick_nine");
   const watchFirstPick = watch("first_pick");
 
-  const [recommendations, setRecommendations] = useState<string[]>([]);
+  const [recommendations, setRecommendations] = useState<Pick[]>([]);
 
   useEffect(() => {
     const subscription = watch((currentMatch) => {
@@ -64,121 +192,108 @@ export default function Home({ matches }: HomeProps) {
       console.log(same_preban);
       const same_starting_picks = same_preban.filter((match) => {
         if (currentMatch.first_pick) {
-          if (!match.first_pick) {
-            [
-              match.picks[0],
-              match.picks[1],
-              match.picks[2],
-              match.picks[3],
-              match.picks[4],
-              match.picks[5],
-              match.picks[6],
-              match.picks[7],
-              match.picks[8],
-              match.picks[9],
-            ] = [
-              match.picks[5],
-              match.picks[6],
-              match.picks[7],
-              match.picks[8],
-              match.picks[9],
-              match.picks[0],
-              match.picks[1],
-              match.picks[2],
-              match.picks[3],
-              match.picks[4],
-            ];
-          }
           return (
-            (currentMatch.pick_zero === match.picks[0] ||
-              currentMatch.pick_zero === "") &&
-            (currentMatch.pick_one === match.picks[1] ||
-              currentMatch.pick_one === match.picks[2] ||
-              currentMatch.pick_one === "") &&
-            (currentMatch.pick_two === match.picks[2] ||
-              currentMatch.pick_two === match.picks[1] ||
-              currentMatch.pick_two === "") &&
-            (currentMatch.pick_three === match.picks[3] ||
-              currentMatch.pick_three === match.picks[4] ||
-              currentMatch.pick_three === "") &&
-            (currentMatch.pick_four === match.picks[4] ||
-              currentMatch.pick_four === match.picks[3] ||
-              currentMatch.pick_four === "") &&
-            (currentMatch.pick_five === match.picks[5] ||
-              currentMatch.pick_five === match.picks[6] ||
-              currentMatch.pick_five === "") &&
-            (currentMatch.pick_six === match.picks[6] ||
-              currentMatch.pick_six === match.picks[5] ||
-              currentMatch.pick_six === "") &&
-            (currentMatch.pick_seven === match.picks[7] ||
-              currentMatch.pick_seven === match.picks[8] ||
-              currentMatch.pick_seven === "") &&
-            (currentMatch.pick_eight === match.picks[8] ||
-              currentMatch.pick_eight === match.picks[7] ||
-              currentMatch.pick_eight === "") &&
-            (currentMatch.pick_nine === match.picks[9] ||
-              currentMatch.pick_nine === "")
+            matchPicks(currentMatch.pick_zero!, [
+              match.first_pick_characters[0],
+            ]) &&
+            matchPicks(currentMatch.pick_one!, [
+              match.first_pick_characters[1],
+              match.first_pick_characters[2],
+            ]) &&
+            matchPicks(currentMatch.pick_two!, [
+              match.first_pick_characters[1],
+              match.first_pick_characters[2],
+            ]) &&
+            matchPicks(currentMatch.pick_three!, [
+              match.first_pick_characters[3],
+              match.first_pick_characters[4],
+            ]) &&
+            matchPicks(currentMatch.pick_four!, [
+              match.first_pick_characters[3],
+              match.first_pick_characters[4],
+            ]) &&
+            matchPicks(currentMatch.pick_five!, [
+              match.second_pick_characters[0],
+              match.second_pick_characters[1],
+            ]) &&
+            matchPicks(currentMatch.pick_six!, [
+              match.second_pick_characters[0],
+              match.second_pick_characters[1],
+            ]) &&
+            matchPicks(currentMatch.pick_seven!, [
+              match.second_pick_characters[2],
+              match.second_pick_characters[3],
+            ]) &&
+            matchPicks(currentMatch.pick_eight!, [
+              match.second_pick_characters[2],
+              match.second_pick_characters[3],
+            ]) &&
+            matchPicks(currentMatch.pick_nine!, [
+              match.second_pick_characters[4],
+            ])
           );
         } else {
-          if (match.first_pick) {
-            [
-              match.picks[0],
-              match.picks[1],
-              match.picks[2],
-              match.picks[3],
-              match.picks[4],
-              match.picks[5],
-              match.picks[6],
-              match.picks[7],
-              match.picks[8],
-              match.picks[9],
-            ] = [
-              match.picks[5],
-              match.picks[6],
-              match.picks[7],
-              match.picks[8],
-              match.picks[9],
-              match.picks[0],
-              match.picks[1],
-              match.picks[2],
-              match.picks[3],
-              match.picks[4],
-            ];
-          }
           return (
-            (currentMatch.pick_zero === match.picks[0] ||
-              currentMatch.pick_zero === match.picks[1] ||
-              currentMatch.pick_zero === "") &&
-            (currentMatch.pick_one === match.picks[1] ||
-              currentMatch.pick_one === match.picks[0] ||
-              currentMatch.pick_one === "") &&
-            (currentMatch.pick_two === match.picks[2] ||
-              currentMatch.pick_two === match.picks[3] ||
-              currentMatch.pick_two === "") &&
-            (currentMatch.pick_three === match.picks[3] ||
-              currentMatch.pick_three === match.picks[2] ||
-              currentMatch.pick_three === "") &&
-            (currentMatch.pick_four === match.picks[4] ||
-              currentMatch.pick_four === "") &&
-            (currentMatch.pick_five === match.picks[5] ||
-              currentMatch.pick_five === "") &&
-            (currentMatch.pick_six === match.picks[6] ||
-              currentMatch.pick_six === match.picks[7] ||
-              currentMatch.pick_six === "") &&
-            (currentMatch.pick_seven === match.picks[7] ||
-              currentMatch.pick_seven === match.picks[6] ||
-              currentMatch.pick_seven === "") &&
-            (currentMatch.pick_eight === match.picks[8] ||
-              currentMatch.pick_eight === match.picks[9] ||
-              currentMatch.pick_eight === "") &&
-            (currentMatch.pick_nine === match.picks[9] ||
-              currentMatch.pick_nine === match.picks[8] ||
-              currentMatch.pick_nine === "")
+            matchPicks(currentMatch.pick_zero!, [
+              match.second_pick_characters[0],
+              match.second_pick_characters[1],
+            ]) &&
+            matchPicks(currentMatch.pick_one!, [
+              match.second_pick_characters[0],
+              match.second_pick_characters[1],
+            ]) &&
+            matchPicks(currentMatch.pick_two!, [
+              match.second_pick_characters[2],
+              match.second_pick_characters[3],
+            ]) &&
+            matchPicks(currentMatch.pick_three!, [
+              match.second_pick_characters[2],
+              match.second_pick_characters[3],
+            ]) &&
+            matchPicks(currentMatch.pick_four!, [
+              match.second_pick_characters[4],
+            ]) &&
+            matchPicks(currentMatch.pick_five!, [
+              match.first_pick_characters[0],
+            ]) &&
+            matchPicks(currentMatch.pick_six!, [
+              match.first_pick_characters[1],
+              match.first_pick_characters[2],
+            ]) &&
+            matchPicks(currentMatch.pick_seven!, [
+              match.first_pick_characters[1],
+              match.first_pick_characters[2],
+            ]) &&
+            matchPicks(currentMatch.pick_eight!, [
+              match.first_pick_characters[3],
+              match.first_pick_characters[4],
+            ]) &&
+            matchPicks(currentMatch.pick_nine!, [
+              match.first_pick_characters[3],
+              match.first_pick_characters[4],
+            ])
           );
         }
       });
-      console.log("Same starting picks", same_starting_picks);
+      console.log("Same starting picks:", same_starting_picks);
       console.log(currentMatch);
+      const searchIndex = findCompletedPicks(currentMatch);
+      let testRecommendations = same_starting_picks.reduce(pickArrayReducer, {
+        picks: [],
+        searchIndex: searchIndex,
+      });
+      console.log("Test Recommendations", testRecommendations);
+
+      setRecommendations(
+        testRecommendations.picks.sort((a, b) => {
+          const a_win_rate = a.wins / (a.wins + a.loses);
+          const b_win_rate = b.wins / (b.wins + b.loses);
+
+          if (a_win_rate < b_win_rate) return 1;
+          else if (a_win_rate === b_win_rate) return 0;
+          else return -1;
+        })
+      );
     });
     return () => subscription.unsubscribe();
   }, [watch]);
@@ -458,7 +573,23 @@ export default function Home({ matches }: HomeProps) {
                 <label>Recommended Picks by Winrate:</label>
                 <div>
                   <h2>
-                    {"Sample & Sample (62.3%), Sample2 & Sample3 (55.89%)"}
+                    {recommendations.map((pick) => {
+                      if (pick.picks.length > 1) {
+                        return (
+                          <div>{`${pick.picks[0]} & ${pick.picks[1]} (${(
+                            (pick.wins / (pick.wins + pick.loses)) *
+                            100
+                          ).toFixed(2)}%)`}</div>
+                        );
+                      } else {
+                        return (
+                          <div>{`${pick.picks[0]} (${(
+                            (pick.wins / (pick.wins + pick.loses)) *
+                            100
+                          ).toFixed(2)}%)`}</div>
+                        );
+                      }
+                    })}
                   </h2>
                 </div>
               </form>
